@@ -2,12 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Cache-Control" content="max-age=86400, public">
-    <!-- 仅保留核心预加载：首屏背景+组长图 -->
-    <link rel="preload" href="bg-desktop.jpg" as="image" media="(min-width: 769px)">
-    <link rel="preload" href="bg-mobile.jpg" as="image" media="(max-width: 768px)">
-    <link rel="preload" href="1.jpg" as="image">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>优秀小组荣誉榜</title>
     <style>
         /* 基础全屏样式：确保背景无空隙 */
@@ -16,7 +11,7 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow-x: hidden; /* 防止横向滚动 */
+            overflow-x: hidden;
         }
         body {
             display: flex;
@@ -24,12 +19,11 @@
             align-items: center;
             flex-direction: column;
             font-family: "微软雅黑", sans-serif;
-            background-color: #F5D76E; /* 兜底色 */
+            background-color: #F5D76E; /* 兜底色，避免背景图加载前空白 */
             background-image: url("bg-desktop.jpg");
-            background-size: cover; /* 全屏覆盖 */
+            background-size: cover;
             background-repeat: no-repeat;
-            background-position: center center; /* 居中对齐 */
-            background-attachment: fixed; /* 滚动不偏移 */
+            background-position: center center;
         }
 
         /* 响应式背景：手机端同步全屏 */
@@ -120,7 +114,7 @@
             }
         }
 
-        /* 勋章样式：合并重复定义，保留金色兜底 */
+        /* 勋章样式：优化加载失败兜底（关键！避免问号） */
         .medal {
             width: 250px;
             height: 250px;
@@ -132,16 +126,33 @@
             transform: scale(0.8);
             transition: all 0.5s;
             box-shadow: 0 0 15px #FFD700;
+            /* 加载失败时显示金色背景+文字，替代默认问号 */
             background-color: #FFD700;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            text-align: center;
+            padding: 10px;
         }
         @media (max-width: 768px) {
-            .medal { width: 150px; height: 150px; border-width: 6px; margin: 10px 0; }
+            .medal { 
+                width: 150px; 
+                height: 150px; 
+                border-width: 6px; 
+                margin: 10px 0; 
+                font-size: 12px;
+            }
         }
         .medal.flash { animation: flash 1s infinite alternate; }
         .medal.show { opacity: 1; transform: scale(1); }
+        /* 图片加载成功后覆盖背景色 */
+        .medal img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 确保图片填满圆形，不拉伸 */
+        }
         @keyframes flash {
             from { box-shadow: 0 0 15px #FFD700; }
             to { box-shadow: 0 0 30px #FFD700, 0 0 40px #FFA500; }
@@ -187,11 +198,11 @@
                 "孔傲雪、",
                 "蒋佳妍"
             ],
+            // 关键：图片路径必须和HTML在同一文件夹，文件名严格匹配（全小写，无空格）
             medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"],
             medalNames: ["陈依菲", "何胜新", "孔傲雪", "蒋佳妍"],
             musicPath: "music.mp3",
-            typeSpeed: 100,
-            lazyLoadPlaceholder: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+            typeSpeed: 100
         };
 
         window.onload = function() {
@@ -202,7 +213,7 @@
             let isStarted = false;
             let musicElem;
 
-            // 启动逻辑：合并音乐+打字机
+            // 启动逻辑
             startBtn.addEventListener("click", function() {
                 if (isStarted) return;
                 isStarted = true;
@@ -220,13 +231,13 @@
                 startTypewriter(0);
             });
 
-            // 音乐二次播放（精简逻辑）
+            // 音乐二次播放
             function playMusicOnce() {
                 musicElem.play().then(() => musicTip.classList.remove("show"))
                 .catch(() => musicTip.textContent = "音乐加载失败，可正常查看荣誉榜");
             }
 
-            // 打字机效果（保留核心）
+            // 打字机效果
             function startTypewriter(partIndex) {
                 const text = config.commentParts[partIndex];
                 let charIdx = 0;
@@ -241,7 +252,7 @@
                 }, config.typeSpeed);
             }
 
-            // 步骤控制（精简switch）
+            // 步骤控制
             function handleNextStep(partIndex) {
                 const delay = partIndex < 2 ? 1000 : 1500;
                 setTimeout(() => {
@@ -250,28 +261,32 @@
                 }, delay);
             }
 
-            // 勋章创建（移除冗余检查）
+            // 勋章创建：移除复杂懒加载，本地直接加载（关键修复！）
             function createMedal(medalIndex) {
                 const wrap = document.createElement("div");
                 wrap.className = "medalWrap";
 
-                // 勋章图片
-                const img = document.createElement("img");
-                img.src = config.lazyLoadPlaceholder;
-                img.dataset.src = config.medalImages[medalIndex];
-                img.className = "medal flash";
-                img.alt = config.medalNames[medalIndex];
-                img.onerror = () => img.alt = `图片加载失败：${config.medalNames[medalIndex]}`;
+                // 勋章容器（加载失败时显示文字）
+                const medalBox = document.createElement("div");
+                medalBox.className = "medal flash";
+                medalBox.textContent = config.medalNames[medalIndex]; // 加载失败时显示姓名
 
-                // 懒加载（保留核心）
-                new IntersectionObserver(entries => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            img.src = img.dataset.src;
-                            entry.target.observer.unobserve(entry.target);
-                        }
-                    });
-                }, { rootMargin: "200px 0px" }).observe(img);
+                // 勋章图片：本地直接加载，不做懒加载（本地文件加载≈内存读取，懒加载反而拖慢）
+                const img = document.createElement("img");
+                img.src = config.medalImages[medalIndex]; // 直接加载本地图片
+                img.alt = config.medalNames[medalIndex];
+
+                // 图片加载成功：插入容器，覆盖文字
+                img.onload = function() {
+                    medalBox.innerHTML = ""; // 清空文字
+                    medalBox.appendChild(img); // 插入图片
+                };
+
+                // 图片加载失败：显示明确提示（方便排查）
+                img.onerror = function() {
+                    medalBox.textContent = `${config.medalNames[medalIndex]}\n(图片加载失败)`;
+                    console.log("图片加载失败：请检查文件是否存在/路径是否正确，文件名：", config.medalImages[medalIndex]);
+                };
 
                 // 姓名标签
                 const name = document.createElement("div");
@@ -279,12 +294,11 @@
                 name.textContent = config.medalNames[medalIndex];
 
                 // 组装
-                wrap.append(img, name);
+                wrap.append(medalBox, name);
                 medalContainer.appendChild(wrap);
-                setTimeout(() => img.classList.add("show"), 100);
+                setTimeout(() => medalBox.classList.add("show"), 100);
             }
         };
     </script>
 </body>
 </html>
-
