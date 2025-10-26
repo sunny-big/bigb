@@ -5,7 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>优秀小组荣誉榜</title>
     <style>
-        /* 基础样式 */
+        /* 基础样式不变，强化加载提示显示 */
+        .loading-tip {
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 0 0 10px #FFD700;
+            text-align: center;
+            z-index: 10;
+            padding: 0 20px;
+        }
+        @media (max-width: 768px) {
+            .loading-tip { font-size: 18px; }
+        }
+        /* 其他样式保持不变（标题、按钮、勋章等） */
         html, body {
             width: 100%;
             height: 100%;
@@ -28,20 +40,6 @@
         @media (max-width: 768px) {
             body { background-image: url("bg-mobile.jpg"); }
         }
-
-        /* 加载提示 */
-        .loading-tip {
-            font-size: 24px;
-            color: #fff;
-            text-shadow: 0 0 10px #FFD700;
-            text-align: center;
-            z-index: 10;
-        }
-        @media (max-width: 768px) {
-            .loading-tip { font-size: 18px; }
-        }
-
-        /* 标题 */
         .title {
             font-size: 42px;
             color: #fff;
@@ -54,8 +52,6 @@
         @media (max-width: 768px) {
             .title { font-size: 28px; }
         }
-
-        /* 启动按钮：强化隐藏逻辑，确保优先级 */
         .start-btn {
             background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             color: #fff;
@@ -69,9 +65,8 @@
             transition: all 0.3s;
             margin: 30px 0;
             z-index: 100;
-            display: none; /* 初始隐藏 */
+            display: none;
         }
-        /* 隐藏类：用!important确保优先级，避免被其他样式干扰 */
         .start-btn.hide {
             display: none !important;
         }
@@ -79,8 +74,6 @@
             .start-btn { font-size: 20px; padding: 15px 40px; }
         }
         .start-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px #FFD700; }
-
-        /* 其他样式保持不变 */
         .music-tip {
             font-size: 16px;
             color: #fff;
@@ -174,7 +167,8 @@
     </style>
 </head>
 <body>
-    <div class="loading-tip" id="loadingTip">正在准备荣誉榜，请稍候...</div>
+    <!-- 加载提示：显示实时进度，方便排查问题 -->
+    <div class="loading-tip" id="loadingTip">正在加载资源（0/6）...</div>
     
     <div class="content-container">
         <h1 class="title" id="mainTitle">优秀小组荣誉榜</h1>
@@ -186,9 +180,17 @@
 
     <script>
         const config = {
-            allImages: ["bg-desktop.jpg", "bg-mobile.jpg", "1.jpg", "2.jpg", "3.jpg", "4.jpg"],
+            // 明确需要加载的图片（共6张：2张背景+4张勋章）
+            allImages: [
+                "bg-desktop.jpg", 
+                "bg-mobile.jpg", 
+                "1.jpg", 
+                "2.jpg", 
+                "3.jpg", 
+                "4.jpg"
+            ],
             commentParts: [
-                "本周课堂表现和作业表现好的小组是陈依菲小组，",
+                "本周课堂表现和作业表现比较好的小组是陈依菲小组，",
                 "小组成员如下：",
                 "组长：陈依菲，",
                 "成员：何胜新、",
@@ -198,34 +200,71 @@
             medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"],
             medalNames: ["陈依菲", "何胜新", "孔傲雪", "蒋佳妍"],
             musicPath: "music.mp3",
-            typeSpeed: 100
+            typeSpeed: 100,
+            loadTimeout: 10000 // 超时时间：10秒（10000毫秒）
         };
 
         let loadedCount = 0;
-        const totalImages = config.allImages.length;
+        const totalImages = config.allImages.length; // 总数量：6
+        let timeoutTimer = null; // 超时计时器
 
+        // 预加载所有图片
         function preloadAllImages() {
-            config.allImages.forEach(imgUrl => {
+            // 设置超时机制：10秒后无论是否加载完，强制显示按钮
+            timeoutTimer = setTimeout(() => {
+                console.log("加载超时，强制显示按钮");
+                forceShowButton();
+            }, config.loadTimeout);
+
+            // 遍历加载所有图片
+            config.allImages.forEach((imgUrl, index) => {
                 const img = new Image();
-                img.onload = img.onerror = function() {
-                    loadedCount++;
-                    checkAllLoaded();
+                // 加载成功：更新计数和进度
+                img.onload = function() {
+                    console.log(`加载成功：${imgUrl}`);
+                    updateLoadProgress();
                 };
+                // 加载失败：仍更新计数（避免卡住），并提示错误
+                img.onerror = function() {
+                    console.error(`加载失败：${imgUrl}（请检查文件是否存在）`);
+                    updateLoadProgress();
+                };
+                // 开始加载
                 img.src = imgUrl;
             });
         }
 
-        function checkAllLoaded() {
+        // 更新加载进度
+        function updateLoadProgress() {
+            loadedCount++;
+            // 实时显示进度（例如：加载中 2/6...）
+            document.getElementById("loadingTip").textContent = `正在加载资源（${loadedCount}/${totalImages}）...`;
+            // 所有图片加载完成：显示按钮
             if (loadedCount >= totalImages) {
-                document.getElementById("loadingTip").style.display = "none";
-                document.getElementById("mainTitle").style.display = "block";
-                document.getElementById("startBtn").style.display = "block";
+                clearTimeout(timeoutTimer); // 清除超时计时器
+                showButton();
             }
+        }
+
+        // 正常显示按钮
+        function showButton() {
+            document.getElementById("loadingTip").style.display = "none";
+            document.getElementById("mainTitle").style.display = "block";
+            document.getElementById("startBtn").style.display = "block";
+        }
+
+        // 超时强制显示按钮
+        function forceShowButton() {
+            document.getElementById("loadingTip").textContent = "部分资源加载较慢，已为您显示荣誉榜";
+            setTimeout(() => {
+                showButton();
+            }, 1000);
         }
 
         window.onload = function() {
             preloadAllImages();
 
+            // 按钮点击逻辑（不变）
             const startBtn = document.getElementById("startBtn");
             const commentElem = document.getElementById("comment");
             const medalContainer = document.getElementById("medalContainer");
@@ -233,17 +272,12 @@
             let isStarted = false;
             let musicElem = null;
 
-            // 点击按钮后强制隐藏的核心逻辑
             startBtn.addEventListener("click", function() {
                 if (isStarted) return;
                 isStarted = true;
-
-                // 1. 立即添加hide类（通过CSS确保隐藏）
                 startBtn.classList.add("hide");
-                // 2. 额外设置style.display强化隐藏（双重保险）
                 startBtn.style.display = "none";
 
-                // 后续逻辑不变
                 musicElem = new Audio(config.musicPath);
                 musicElem.crossOrigin = "anonymous";
                 playMusic();
