@@ -2,11 +2,11 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 新增：适配手机屏幕（必须加，否则手机上显示错乱） -->
+    <!-- 手机适配核心：禁止缩放，确保布局正确 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>优秀小组荣誉榜</title>
     <style>
-        /* 页面整体垂直+水平居中 */
+        /* 页面整体：默认电脑端样式 */
         body {
             margin: 0;
             padding: 20px;
@@ -16,8 +16,8 @@
             align-items: center;
             flex-direction: column;
             font-family: "微软雅黑", sans-serif;
-            /* 背景样式 */
-            background-image: url("bg.jpg");
+            /* 电脑端背景图：大屏专用 */
+            background-image: url("bg-desktop.jpg"); /* 电脑背景图（建议1920×1080像素） */
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
@@ -25,21 +25,21 @@
             background-color: rgba(255, 215, 0, 0.3);
             background-blend-mode: overlay;
         }
-        /* 荣誉榜标题 */
+        /* 荣誉榜标题：电脑端大号字体 */
         .title {
-            font-size: 36px;
+            font-size: 42px;
             color: #fff;
             text-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500;
             margin-bottom: 20px;
             text-align: center;
         }
-        /* 公布名单按钮：加提示文字，引导用户点击播放音乐 */
+        /* 按钮：电脑端更大更醒目 */
         .start-btn {
             background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             color: #fff;
             border: none;
-            padding: 15px 40px;
-            font-size: 24px;
+            padding: 18px 45px;
+            font-size: 26px;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 0 15px #FFD700;
@@ -54,22 +54,30 @@
         .start-btn.hide {
             display: none;
         }
-        /* 解说词：无框，加强阴影确保清晰 */
+        /* 解说词：电脑端清晰展示 */
         .comment {
-            font-size: 24px;
+            font-size: 26px;
             color: #fff;
             padding: 10px 0;
             margin: 0 auto 30px;
             width: 80%;
             text-align: center;
-            min-height: 60px;
+            min-height: 70px;
             line-height: 1.5;
             display: flex;
             align-items: center;
             justify-content: center;
             text-shadow: 0 0 8px #000, 0 0 12px rgba(0,0,0,0.8);
         }
-        /* 勋章样式（电脑端） */
+        /* 勋章容器：电脑端一排显示（核心布局） */
+        #medalContainer {
+            display: flex; /* 电脑端用flex横向排列 */
+            justify-content: center; /* 水平居中 */
+            align-items: center;
+            width: 100%;
+            flex-wrap: nowrap; /* 不换行，确保一排显示 */
+        }
+        /* 勋章样式（电脑端）：大屏尺寸 */
         .medal {
             width: 250px;
             height: 250px;
@@ -77,19 +85,17 @@
             border-radius: 50%;
             overflow: hidden;
             margin: 20px;
-            display: inline-block;
             opacity: 0;
             transform: scale(0.8);
             transition: all 0.5s;
             box-shadow: 0 0 15px #FFD700;
         }
-        /* 勋章外层容器 */
+        /* 勋章外层容器：电脑端间距 */
         .medalWrap {
-            display: inline-block;
-            margin: 0 40px;
+            margin: 0 20px; /* 电脑端勋章间距 */
             text-align: center;
         }
-        /* 勋章闪烁动画 */
+        /* 勋章闪烁动画：保留金色闪烁 */
         @keyframes flash {
             from { box-shadow: 0 0 15px #FFD700; }
             to { box-shadow: 0 0 30px #FFD700, 0 0 40px #FFA500; }
@@ -102,9 +108,9 @@
             opacity: 1;
             transform: scale(1);
         }
-        /* 成员姓名标签 */
+        /* 成员姓名标签：电脑端清晰可见 */
         .name {
-            font-size: 20px;
+            font-size: 22px;
             color: #fff;
             margin-top: 10px;
             text-shadow: 0 0 5px #000;
@@ -117,30 +123,47 @@
             align-items: center;
         }
 
-        /* 新增：手机端适配（屏幕宽度≤768px时生效） */
+        /* 手机端适配（屏幕宽度≤768px时触发） */
         @media (max-width: 768px) {
+            /* 手机端背景图：竖屏专用 */
+            body {
+                background-image: url("bg-mobile.jpg"); /* 手机背景图（建议1080×1920像素） */
+            }
+            /* 标题缩小适配手机 */
             .title {
-                font-size: 28px; /* 标题缩小 */
+                font-size: 28px;
             }
+            /* 按钮尺寸缩小 */
             .start-btn {
-                font-size: 18px; /* 按钮文字缩小 */
-                padding: 12px 30px; /* 按钮尺寸缩小 */
+                font-size: 18px;
+                padding: 12px 30px;
             }
+            /* 解说词适配手机屏幕 */
             .comment {
-                font-size: 18px; /* 打字机文字缩小 */
-                width: 95%; /* 文字占满手机屏幕 */
+                font-size: 18px;
+                width: 95%;
             }
+            /* 勋章容器：手机端两排显示（核心布局） */
+            #medalContainer {
+                display: grid; /* 手机端用grid网格布局 */
+                grid-template-columns: repeat(2, 1fr); /* 固定2列，实现两排 */
+                gap: 15px; /* 勋章间距 */
+                padding: 0 10px;
+            }
+            /* 勋章样式：手机端缩小 */
             .medal {
-                width: 150px; /* 勋章缩小到150px */
+                width: 150px;
                 height: 150px;
-                border-width: 6px; /* 勋章边框同步缩小 */
-                margin: 10px;
+                border-width: 6px;
+                margin: 10px 0;
             }
+            /* 勋章外层容器：手机端无额外间距（由grid gap控制） */
             .medalWrap {
-                margin: 0 10px; /* 勋章间距缩小 */
+                margin: 0;
             }
+            /* 姓名标签缩小 */
             .name {
-                font-size: 16px; /* 姓名标签缩小 */
+                font-size: 16px;
             }
         }
     </style>
@@ -148,26 +171,26 @@
 <body>
     <div class="content-container">
         <h1 class="title">优秀小组荣誉榜</h1>
-        <!-- 按钮加提示：告诉用户点击能播放音乐（微信必须用户点击才放音乐） -->
         <button class="start-btn" id="startBtn">点击公布名单</button>
         <div class="comment" id="comment"></div>
         <div id="medalContainer"></div>
     </div>
 
     <script>
-        // 可修改内容（每周更新名单/图片时，只改这里！）
+        // 可修改内容（保持原逻辑，仅优化组长不重复）
         const config = {
             commentParts: [
-                "本周课堂表现和作业表现比较好的小组是陈依菲小组，",
-                "组长陈依菲，",
-                "成员何胜新、",
+                "本周课堂表现和作业表现好的小组是陈依菲小组，",
+                "小组成员如下：",
+                "组长：陈依菲，",
+                "成员：何胜新、",
                 "孔傲雪、",
                 "蒋佳妍"
             ],
             medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"], // 顺序：组长→成员1→成员2→成员3
             medalNames: ["陈依菲", "何胜新", "孔傲雪", "蒋佳妍"],
             musicPath: "music.mp3",
-            typeSpeed: 100 // 打字速度：100毫秒/字符（越小越快）
+            typeSpeed: 100 // 打字速度不变
         };
 
         window.onload = function() {
@@ -177,16 +200,15 @@
             const musicElem = new Audio(config.musicPath);
             let isStarted = false;
 
-            // 点击按钮触发流程
+            // 点击按钮触发流程（保留原交互）
             startBtn.addEventListener("click", function() {
                 if (isStarted) return;
                 isStarted = true;
 
                 // 1. 隐藏按钮
                 startBtn.classList.add("hide");
-                // 2. 播放背景音乐（微信必须用户点击后才能播放，这里按钮点击已满足条件）
+                // 2. 播放背景音乐（兼容微信）
                 musicElem.play().catch(err => {
-                    // 若仍播放失败，提示用户再点击一次页面
                     alert("音乐需要授权，再点击页面任意位置即可播放");
                     document.body.onclick = function() {
                         musicElem.play();
@@ -197,7 +219,7 @@
                 startTypewriter(0);
             });
 
-            /** 打字机核心函数：逐字符显示文本片段 */
+            /** 打字机核心函数：逐字符显示 */
             function startTypewriter(partIndex) {
                 const currentText = config.commentParts[partIndex];
                 let charIndex = 0;
@@ -209,36 +231,39 @@
 
                     if (charIndex >= currentText.length) {
                         clearInterval(typeTimer);
-                        handleAfterType(partIndex); // 片段打完后触发后续（显示勋章/打下一段）
+                        handleAfterType(partIndex);
                     }
                 }, config.typeSpeed);
             }
 
-            /** 打字结束后：同步显示勋章+启动下一段 */
+            /** 打字结束后：同步显示勋章（修复组长重复问题） */
             function handleAfterType(partIndex) {
                 switch (partIndex) {
-                    case 0: // 小组信息打完 → 1秒后打组长信息
+                    case 0: // 小组名 → 1秒后介绍成员
                         setTimeout(() => startTypewriter(1), 1000);
                         break;
-                    case 1: // 组长信息打完 → 显示组长勋章，1.5秒后打成员1
+                    case 1: // 成员提示 → 1秒后提组长
+                        setTimeout(() => startTypewriter(2), 1000);
+                        break;
+                    case 2: // 组长信息 → 显示组长勋章（1次），1.5秒后提成员1
                         createMedal(0);
-                        setTimeout(() => startTypewriter(2), 1500);
+                        setTimeout(() => startTypewriter(3), 1500);
                         break;
-                    case 2: // 成员1信息打完 → 显示成员1勋章，2秒后打成员2
+                    case 3: // 成员1 → 显示成员1勋章，2秒后提成员2
                         createMedal(1);
-                        setTimeout(() => startTypewriter(3), 2000);
-                        break;
-                    case 3: // 成员2信息打完 → 显示成员2勋章，2秒后打成员3
-                        createMedal(2);
                         setTimeout(() => startTypewriter(4), 2000);
                         break;
-                    case 4: // 成员3信息打完 → 显示成员3勋章（流程结束）
+                    case 4: // 成员2 → 显示成员2勋章，2秒后提成员3
+                        createMedal(2);
+                        setTimeout(() => startTypewriter(5), 2000);
+                        break;
+                    case 5: // 成员3 → 显示成员3勋章（结束）
                         createMedal(3);
                         break;
                 }
             }
 
-            /** 生成勋章通用函数 */
+            /** 生成勋章函数：样式由CSS控制，这里只负责创建元素 */
             function createMedal(medalIndex) {
                 const medalWrap = document.createElement("div");
                 medalWrap.className = "medalWrap";
@@ -247,6 +272,10 @@
                 medalElem.src = config.medalImages[medalIndex];
                 medalElem.className = "medal flash";
                 medalElem.alt = config.medalNames[medalIndex];
+                // 图片加载失败提示
+                medalElem.onerror = function() {
+                    alert(`【${config.medalNames[medalIndex]}】的图片加载失败，请检查文件名`);
+                };
 
                 const nameElem = document.createElement("div");
                 nameElem.className = "name";
@@ -256,10 +285,10 @@
                 medalWrap.appendChild(nameElem);
                 medalContainer.appendChild(medalWrap);
 
+                // 勋章弹出动画
                 setTimeout(() => medalElem.classList.add("show"), 100);
             }
         };
     </script>
 </body>
-
 </html>
