@@ -2,51 +2,42 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="max-age=86400, public">
+    <!-- 预加载背景图和首屏人物图（关键优化） -->
+    <link rel="preload" href="bg-desktop.jpg" as="image" media="(min-width: 769px)">
+    <link rel="preload" href="bg-mobile.jpg" as="image" media="(max-width: 768px)">
+    <link rel="preload" href="1.jpg" as="image"> <!-- 组长图优先加载 -->
     <title>优秀小组荣誉榜</title>
     <style>
-        /* 基础全屏样式：确保背景无空隙 */
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
+        /* 保留原有样式，增加图片错误时的兜底显示 */
+        .medal {
+            /* 原有样式不变 */
+            background-color: #FFD700; /* 图片加载失败时显示金色背景，不空白 */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
         }
+        /* 其他样式不变（标题、按钮、布局等） */
+        html { height: 100% !important; margin: 0; padding: 0; }
         body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
             font-family: "微软雅黑", sans-serif;
-            background-color: #F5D76E; /* 兜底色，避免背景图加载前空白 */
+            background-color: #F5D76E;
             background-image: url("bg-desktop.jpg");
             background-size: cover;
             background-repeat: no-repeat;
-            background-position: center center;
+            background-position: center;
         }
-
-        /* 响应式背景：手机端同步全屏 */
-        @media (max-width: 768px) {
-            body {
-                background-image: url("bg-mobile.jpg");
-            }
-        }
-
-        /* 标题样式 */
-        .title {
-            font-size: 42px;
-            color: #fff;
-            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500;
-            margin-bottom: 20px;
-            text-align: center;
-            z-index: 5;
-        }
-        @media (max-width: 768px) {
-            .title { font-size: 28px; }
-        }
-
-        /* 启动按钮 */
+        @media (max-width: 768px) { body { background-image: url("bg-mobile.jpg"); height: 100%; } }
+        .title { font-size: 42px; color: #fff; text-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500; margin-bottom: 20px; text-align: center; z-index: 5; }
+        @media (max-width: 768px) { .title { font-size: 28px; } }
         .start-btn {
             background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             color: #fff;
@@ -58,16 +49,12 @@
             cursor: pointer;
             box-shadow: 0 0 20px #FFD700;
             transition: all 0.3s;
-            margin: 20px 0;
+            margin: 30px 0;
             z-index: 100;
         }
-        @media (max-width: 768px) {
-            .start-btn { font-size: 20px; padding: 15px 40px; }
-        }
+        @media (max-width: 768px) { .start-btn { font-size: 20px; padding: 15px 40px; } }
         .start-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px #FFD700; }
         .start-btn.hide { display: none; }
-
-        /* 音乐提示 */
         .music-tip {
             font-size: 16px;
             color: #fff;
@@ -78,13 +65,11 @@
             z-index: 5;
         }
         .music-tip.show { display: block; }
-
-        /* 解说词 */
         .comment {
             font-size: 26px;
             color: #fff;
             padding: 10px 0;
-            margin: 0 auto 20px;
+            margin: 0 auto 30px;
             width: 80%;
             text-align: center;
             min-height: 70px;
@@ -92,16 +77,12 @@
             text-shadow: 0 0 8px #000, 0 0 12px rgba(0,0,0,0.8);
             z-index: 5;
         }
-        @media (max-width: 768px) {
-            .comment { font-size: 18px; width: 95%; }
-        }
-
-        /* 勋章容器：合并响应式布局 */
+        @media (max-width: 768px) { .comment { font-size: 18px; width: 95%; } }
         #medalContainer {
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 90%;
+            width: 100%;
             flex-wrap: nowrap;
             z-index: 5;
         }
@@ -113,53 +94,26 @@
                 padding: 0 10px;
             }
         }
-
-        /* 勋章样式：优化加载失败兜底（关键！避免问号） */
         .medal {
             width: 250px;
             height: 250px;
             border: 10px solid #FFD700;
             border-radius: 50%;
             overflow: hidden;
-            margin: 15px;
+            margin: 20px;
             opacity: 0;
             transform: scale(0.8);
             transition: all 0.5s;
             box-shadow: 0 0 15px #FFD700;
-            /* 加载失败时显示金色背景+文字，替代默认问号 */
-            background-color: #FFD700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 14px;
-            text-align: center;
-            padding: 10px;
         }
-        @media (max-width: 768px) {
-            .medal { 
-                width: 150px; 
-                height: 150px; 
-                border-width: 6px; 
-                margin: 10px 0; 
-                font-size: 12px;
-            }
-        }
+        @media (max-width: 768px) { .medal { width: 150px; height: 150px; border-width: 6px; margin: 10px 0; } }
         .medal.flash { animation: flash 1s infinite alternate; }
         .medal.show { opacity: 1; transform: scale(1); }
-        /* 图片加载成功后覆盖背景色 */
-        .medal img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* 确保图片填满圆形，不拉伸 */
-        }
         @keyframes flash {
             from { box-shadow: 0 0 15px #FFD700; }
             to { box-shadow: 0 0 30px #FFD700, 0 0 40px #FFA500; }
         }
-
-        /* 姓名标签 */
-        .medalWrap { margin: 0 10px; text-align: center; }
+        .medalWrap { margin: 0 20px; text-align: center; }
         @media (max-width: 768px) { .medalWrap { margin: 0; } }
         .name {
             font-size: 22px;
@@ -168,8 +122,6 @@
             text-shadow: 0 0 5px #000;
         }
         @media (max-width: 768px) { .name { font-size: 16px; } }
-
-        /* 内容容器：确保层级 */
         .content-container {
             width: 100%;
             display: flex;
@@ -177,6 +129,15 @@
             align-items: center;
             z-index: 5;
         }
+        /* 图片加载错误提示（新增） */
+        .image-error {
+            font-size: 14px;
+            color: #fff;
+            text-shadow: 0 0 5px #000;
+            margin-top: 5px;
+            display: none;
+        }
+        .image-error.show { display: block; }
     </style>
 </head>
 <body>
@@ -191,18 +152,20 @@
     <script>
         const config = {
             commentParts: [
-                "本周课堂表现和作业表现好的小组是陈依菲小组，",
+                "本周课堂表现和作业表现比较好的小组是陈依菲小组，",
                 "小组成员如下：",
                 "组长：陈依菲，",
                 "成员：何胜新、",
                 "孔傲雪、",
                 "蒋佳妍"
             ],
-            // 关键：图片路径必须和HTML在同一文件夹，文件名严格匹配（全小写，无空格）
-            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"],
+            // 人物图片路径：必须和HTML文件在同一目录，文件名严格一致
+            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"], 
             medalNames: ["陈依菲", "何胜新", "孔傲雪", "蒋佳妍"],
-            musicPath: "music.mp3",
-            typeSpeed: 100
+            musicPath: "music.mp3", // 替换为你的CDN音乐链接
+            typeSpeed: 100,
+            // 占位图：加载失败时显示
+            lazyLoadPlaceholder: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
         };
 
         window.onload = function() {
@@ -211,92 +174,125 @@
             const medalContainer = document.getElementById("medalContainer");
             const musicTip = document.getElementById("musicTip");
             let isStarted = false;
-            let musicElem;
+            let musicElem = null;
 
-            // 启动逻辑
             startBtn.addEventListener("click", function() {
                 if (isStarted) return;
                 isStarted = true;
                 startBtn.classList.add("hide");
-                
-                // 初始化音乐
-                musicElem = new Audio(config.musicPath);
-                musicElem.play().then(() => musicTip.classList.remove("show"))
-                .catch(() => {
-                    musicTip.classList.add("show");
-                    document.body.addEventListener("click", playMusicOnce, { once: true });
-                });
 
-                // 启动解说词
+                musicElem = new Audio(config.musicPath);
+                musicElem.crossOrigin = "anonymous";
+                playMusic();
                 startTypewriter(0);
             });
 
-            // 音乐二次播放
-            function playMusicOnce() {
-                musicElem.play().then(() => musicTip.classList.remove("show"))
-                .catch(() => musicTip.textContent = "音乐加载失败，可正常查看荣誉榜");
+            function playMusic() {
+                musicElem.play().then(() => {
+                    musicTip.classList.remove("show");
+                }).catch(err => {
+                    musicTip.classList.add("show");
+                    document.body.addEventListener("click", function retryPlay() {
+                        musicElem.play().then(() => {
+                            musicTip.classList.remove("show");
+                            document.body.removeEventListener("click", retryPlay);
+                        }).catch(err2 => {
+                            musicTip.textContent = "音乐加载失败，请检查CDN链接";
+                            document.body.removeEventListener("click", retryPlay);
+                        });
+                    }, { once: true });
+                });
             }
 
-            // 打字机效果
             function startTypewriter(partIndex) {
-                const text = config.commentParts[partIndex];
-                let charIdx = 0;
-                const originContent = commentElem.textContent;
+                const currentText = config.commentParts[partIndex];
+                let charIndex = 0;
+                const originalContent = commentElem.textContent;
 
-                const timer = setInterval(() => {
-                    commentElem.textContent = originContent + text.slice(0, ++charIdx);
-                    if (charIdx >= text.length) {
-                        clearInterval(timer);
-                        handleNextStep(partIndex);
+                const typeTimer = setInterval(() => {
+                    commentElem.textContent = originalContent + currentText.slice(0, charIndex + 1);
+                    charIndex++;
+                    if (charIndex >= currentText.length) {
+                        clearInterval(typeTimer);
+                        handleAfterType(partIndex);
                     }
                 }, config.typeSpeed);
             }
 
-            // 步骤控制
-            function handleNextStep(partIndex) {
-                const delay = partIndex < 2 ? 1000 : 1500;
-                setTimeout(() => {
-                    if (partIndex >= 2) createMedal(partIndex - 2); // 勋章索引对应
-                    if (partIndex < 5) startTypewriter(partIndex + 1);
-                }, delay);
+            function handleAfterType(partIndex) {
+                switch (partIndex) {
+                    case 0: setTimeout(() => startTypewriter(1), 1000); break;
+                    case 1: setTimeout(() => startTypewriter(2), 1000); break;
+                    case 2: createMedal(0); setTimeout(() => startTypewriter(3), 1500); break;
+                    case 3: createMedal(1); setTimeout(() => startTypewriter(4), 2000); break;
+                    case 4: createMedal(2); setTimeout(() => startTypewriter(5), 2000); break;
+                    case 5: createMedal(3); break;
+                }
             }
 
-            // 勋章创建：移除复杂懒加载，本地直接加载（关键修复！）
+            /** 修复人物图片加载逻辑（核心修改） */
             function createMedal(medalIndex) {
-                const wrap = document.createElement("div");
-                wrap.className = "medalWrap";
+                const medalWrap = document.createElement("div");
+                medalWrap.className = "medalWrap";
 
-                // 勋章容器（加载失败时显示文字）
-                const medalBox = document.createElement("div");
-                medalBox.className = "medal flash";
-                medalBox.textContent = config.medalNames[medalIndex]; // 加载失败时显示姓名
+                // 人物图片元素
+                const medalElem = document.createElement("img");
+                medalElem.src = config.lazyLoadPlaceholder; // 先加载占位图
+                medalElem.dataset.src = config.medalImages[medalIndex]; // 真实图片路径
+                medalElem.className = "medal flash";
+                medalElem.alt = config.medalNames[medalIndex];
 
-                // 勋章图片：本地直接加载，不做懒加载（本地文件加载≈内存读取，懒加载反而拖慢）
-                const img = document.createElement("img");
-                img.src = config.medalImages[medalIndex]; // 直接加载本地图片
-                img.alt = config.medalNames[medalIndex];
+                // 新增：图片加载错误提示（显示具体文件名，方便排查）
+                const errorElem = document.createElement("div");
+                errorElem.className = "image-error";
+                errorElem.textContent = `图片加载失败：${config.medalImages[medalIndex]}`;
 
-                // 图片加载成功：插入容器，覆盖文字
-                img.onload = function() {
-                    medalBox.innerHTML = ""; // 清空文字
-                    medalBox.appendChild(img); // 插入图片
+                // 图片加载成功：隐藏错误提示
+                medalElem.onload = function() {
+                    errorElem.classList.remove("show");
                 };
 
-                // 图片加载失败：显示明确提示（方便排查）
-                img.onerror = function() {
-                    medalBox.textContent = `${config.medalNames[medalIndex]}\n(图片加载失败)`;
-                    console.log("图片加载失败：请检查文件是否存在/路径是否正确，文件名：", config.medalImages[medalIndex]);
+                // 图片加载失败：显示错误提示，并保留金色兜底背景
+                medalElem.onerror = function() {
+                    this.src = config.lazyLoadPlaceholder; // 显示占位图
+                    errorElem.classList.add("show"); // 显示错误信息
                 };
+
+                // 修复懒加载逻辑：兼容所有浏览器，强制触发加载
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            // 强制设置src，避免observer延迟
+                            medalElem.src = medalElem.dataset.src;
+                            observer.unobserve(medalElem);
+                        }
+                    });
+                }, { 
+                    rootMargin: "200px 0px", // 提前200px加载
+                    threshold: 0.1 // 可见10%即触发
+                });
+                observer.observe(medalElem);
+
+                // 强制触发一次检查（解决部分浏览器observer不生效问题）
+                setTimeout(() => {
+                    if (medalElem.src === config.lazyLoadPlaceholder) {
+                        medalElem.src = medalElem.dataset.src;
+                    }
+                }, 500);
 
                 // 姓名标签
-                const name = document.createElement("div");
-                name.className = "name";
-                name.textContent = config.medalNames[medalIndex];
+                const nameElem = document.createElement("div");
+                nameElem.className = "name";
+                nameElem.textContent = config.medalNames[medalIndex];
 
-                // 组装
-                wrap.append(medalBox, name);
-                medalContainer.appendChild(wrap);
-                setTimeout(() => medalBox.classList.add("show"), 100);
+                // 组装元素
+                medalWrap.appendChild(medalElem);
+                medalWrap.appendChild(nameElem);
+                medalWrap.appendChild(errorElem); // 加入错误提示
+                medalContainer.appendChild(medalWrap);
+
+                // 显示动画
+                setTimeout(() => medalElem.classList.add("show"), 100);
             }
         };
     </script>
