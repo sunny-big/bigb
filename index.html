@@ -4,21 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Cache-Control" content="max-age=86400, public">
-    <!-- 预加载背景图和首屏人物图（关键优化） -->
+    <!-- 预加载所有核心图片：背景图+所有勋章图（关键！优先加载） -->
     <link rel="preload" href="bg-desktop.jpg" as="image" media="(min-width: 769px)">
     <link rel="preload" href="bg-mobile.jpg" as="image" media="(max-width: 768px)">
-    <link rel="preload" href="1.jpg" as="image"> <!-- 组长图优先加载 -->
+    <link rel="preload" href="1.jpg" as="image">
+    <link rel="preload" href="2.jpg" as="image">
+    <link rel="preload" href="3.jpg" as="image">
+    <link rel="preload" href="4.jpg" as="image">
     <title>优秀小组荣誉榜</title>
     <style>
-        /* 保留原有样式，增加图片错误时的兜底显示 */
+        /* 保留原有样式，确保图片加载成功后正常显示 */
         .medal {
-            /* 原有样式不变 */
-            background-color: #FFD700; /* 图片加载失败时显示金色背景，不空白 */
+            background-color: #FFD700; /* 加载失败兜底 */
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: center;
         }
-        /* 其他样式不变（标题、按钮、布局等） */
+        /* 其他样式不变 */
         html { height: 100% !important; margin: 0; padding: 0; }
         body {
             margin: 0;
@@ -129,7 +131,6 @@
             align-items: center;
             z-index: 5;
         }
-        /* 图片加载错误提示（新增） */
         .image-error {
             font-size: 14px;
             color: #fff;
@@ -152,23 +153,35 @@
     <script>
         const config = {
             commentParts: [
-                "本周课堂表现和作业表现比较好的小组是陈依菲小组，",
+                "本周课堂表现和作业表现好的小组是陈依菲小组，",
                 "小组成员如下：",
                 "组长：陈依菲，",
                 "成员：何胜新、",
                 "孔傲雪、",
                 "蒋佳妍"
             ],
-            // 人物图片路径：必须和HTML文件在同一目录，文件名严格一致
-            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"], 
+            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"], // 所有勋章图路径
             medalNames: ["陈依菲", "何胜新", "孔傲雪", "蒋佳妍"],
-            musicPath: "music.mp3", // 替换为你的CDN音乐链接
-            typeSpeed: 100,
-            // 占位图：加载失败时显示
-            lazyLoadPlaceholder: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+            musicPath: "music.mp3",
+            typeSpeed: 100
         };
 
+        // 关键：页面加载时就预加载所有勋章图（优先加载核心）
+        function preloadAllImages() {
+            config.medalImages.forEach(imgUrl => {
+                const img = new Image(); // 创建Image对象预加载
+                img.src = imgUrl; // 触发加载，缓存到浏览器
+                // 预加载失败不影响，后续显示时会触发error提示
+                img.onerror = () => {
+                    console.log(`预加载失败：${imgUrl}，请检查文件路径`);
+                };
+            });
+        }
+
+        // 页面加载完成后，立即执行预加载（确保点击前图片已缓存）
         window.onload = function() {
+            preloadAllImages(); // 第一步：预加载所有图片
+            
             const startBtn = document.getElementById("startBtn");
             const commentElem = document.getElementById("comment");
             const medalContainer = document.getElementById("medalContainer");
@@ -176,17 +189,22 @@
             let isStarted = false;
             let musicElem = null;
 
+            // 点击按钮逻辑
             startBtn.addEventListener("click", function() {
                 if (isStarted) return;
                 isStarted = true;
                 startBtn.classList.add("hide");
 
+                // 音乐初始化
                 musicElem = new Audio(config.musicPath);
                 musicElem.crossOrigin = "anonymous";
                 playMusic();
+
+                // 启动打字机
                 startTypewriter(0);
             });
 
+            // 音乐播放逻辑（不变）
             function playMusic() {
                 musicElem.play().then(() => {
                     musicTip.classList.remove("show");
@@ -197,13 +215,14 @@
                             musicTip.classList.remove("show");
                             document.body.removeEventListener("click", retryPlay);
                         }).catch(err2 => {
-                            musicTip.textContent = "音乐加载失败，请检查CDN链接";
+                            musicTip.textContent = "音乐加载失败，请检查文件";
                             document.body.removeEventListener("click", retryPlay);
                         });
                     }, { once: true });
                 });
             }
 
+            // 打字机逻辑（不变）
             function startTypewriter(partIndex) {
                 const currentText = config.commentParts[partIndex];
                 let charIndex = 0;
@@ -219,6 +238,7 @@
                 }, config.typeSpeed);
             }
 
+            // 步骤控制（不变）
             function handleAfterType(partIndex) {
                 switch (partIndex) {
                     case 0: setTimeout(() => startTypewriter(1), 1000); break;
@@ -230,55 +250,26 @@
                 }
             }
 
-            /** 修复人物图片加载逻辑（核心修改） */
+            /** 勋章创建：移除懒加载，直接加载预缓存的图片（关键修改） */
             function createMedal(medalIndex) {
                 const medalWrap = document.createElement("div");
                 medalWrap.className = "medalWrap";
 
-                // 人物图片元素
+                // 直接加载真实图片（已预缓存，秒显示）
                 const medalElem = document.createElement("img");
-                medalElem.src = config.lazyLoadPlaceholder; // 先加载占位图
-                medalElem.dataset.src = config.medalImages[medalIndex]; // 真实图片路径
+                medalElem.src = config.medalImages[medalIndex]; // 不用占位图，直接用真实路径
                 medalElem.className = "medal flash";
                 medalElem.alt = config.medalNames[medalIndex];
 
-                // 新增：图片加载错误提示（显示具体文件名，方便排查）
+                // 错误提示（保留，排查路径问题）
                 const errorElem = document.createElement("div");
                 errorElem.className = "image-error";
                 errorElem.textContent = `图片加载失败：${config.medalImages[medalIndex]}`;
 
-                // 图片加载成功：隐藏错误提示
-                medalElem.onload = function() {
-                    errorElem.classList.remove("show");
-                };
-
-                // 图片加载失败：显示错误提示，并保留金色兜底背景
-                medalElem.onerror = function() {
-                    this.src = config.lazyLoadPlaceholder; // 显示占位图
-                    errorElem.classList.add("show"); // 显示错误信息
-                };
-
-                // 修复懒加载逻辑：兼容所有浏览器，强制触发加载
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            // 强制设置src，避免observer延迟
-                            medalElem.src = medalElem.dataset.src;
-                            observer.unobserve(medalElem);
-                        }
-                    });
-                }, { 
-                    rootMargin: "200px 0px", // 提前200px加载
-                    threshold: 0.1 // 可见10%即触发
-                });
-                observer.observe(medalElem);
-
-                // 强制触发一次检查（解决部分浏览器observer不生效问题）
-                setTimeout(() => {
-                    if (medalElem.src === config.lazyLoadPlaceholder) {
-                        medalElem.src = medalElem.dataset.src;
-                    }
-                }, 500);
+                // 加载成功：隐藏错误提示
+                medalElem.onload = () => errorElem.classList.remove("show");
+                // 加载失败：显示提示（仅路径错误时触发）
+                medalElem.onerror = () => errorElem.classList.add("show");
 
                 // 姓名标签
                 const nameElem = document.createElement("div");
@@ -288,10 +279,10 @@
                 // 组装元素
                 medalWrap.appendChild(medalElem);
                 medalWrap.appendChild(nameElem);
-                medalWrap.appendChild(errorElem); // 加入错误提示
+                medalWrap.appendChild(errorElem);
                 medalContainer.appendChild(medalWrap);
 
-                // 显示动画
+                // 显示动画（不变）
                 setTimeout(() => medalElem.classList.add("show"), 100);
             }
         };
