@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Cache-Control" content="max-age=86400, public">
-    <!-- 预加载核心资源，加速首屏 -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/bg-desktop.jpg" as="image" media="(min-width: 769px)">
-    <link rel="preload" href="https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/bg-mobile.jpg" as="image" media="(max-width: 768px)">
-    <link rel="preload" href="https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/1.jpg" as="image">
+    <!-- 预加载背景图和首屏人物图（关键优化） -->
+    <link rel="preload" href="bg-desktop.jpg" as="image" media="(min-width: 769px)">
+    <link rel="preload" href="bg-mobile.jpg" as="image" media="(max-width: 768px)">
+    <link rel="preload" href="1.jpg" as="image"> <!-- 组长图优先加载 -->
     <title>优秀小组荣誉榜</title>
     <style>
+        /* 保留原有样式，增加图片错误时的兜底显示 */
+        .medal {
+            /* 原有样式不变 */
+            background-color: #FFD700; /* 图片加载失败时显示金色背景，不空白 */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        /* 其他样式不变（标题、按钮、布局等） */
         html { height: 100% !important; margin: 0; padding: 0; }
         body {
             margin: 0;
@@ -21,17 +30,12 @@
             flex-direction: column;
             font-family: "微软雅黑", sans-serif;
             background-color: #F5D76E;
-            background-image: url("https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/bg-desktop.jpg");
+            background-image: url("bg-desktop.jpg");
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
         }
-        @media (max-width: 768px) {
-            body {
-                background-image: url("https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/bg-mobile.jpg");
-                height: 100%;
-            }
-        }
+        @media (max-width: 768px) { body { background-image: url("bg-mobile.jpg"); height: 100%; } }
         .title { font-size: 42px; color: #fff; text-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500; margin-bottom: 20px; text-align: center; z-index: 5; }
         @media (max-width: 768px) { .title { font-size: 28px; } }
         .start-btn {
@@ -101,10 +105,6 @@
             transform: scale(0.8);
             transition: all 0.5s;
             box-shadow: 0 0 15px #FFD700;
-            background-color: #FFD700;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: center;
         }
         @media (max-width: 768px) { .medal { width: 150px; height: 150px; border-width: 6px; margin: 10px 0; } }
         .medal.flash { animation: flash 1s infinite alternate; }
@@ -129,6 +129,7 @@
             align-items: center;
             z-index: 5;
         }
+        /* 图片加载错误提示（新增） */
         .image-error {
             font-size: 14px;
             color: #fff;
@@ -142,7 +143,7 @@
 <body>
     <div class="content-container">
         <h1 class="title">优秀小组荣誉榜</h1>
-        <button class="start-btn" id="startBtn">点击公布名单（播放音乐）</button>
+        <button class="start-btn" id="startBtn">点击公布名单</button>
         <div class="music-tip" id="musicTip">若未听到音乐，请再点击页面任意位置</div>
         <div class="comment" id="comment"></div>
         <div id="medalContainer"></div>
@@ -158,17 +159,12 @@
                 "孔傲雪、",
                 "蒋佳妍"
             ],
-            // 已替换为jsDelivr CDN链接，直接用
-            medalImages: [
-                "https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/1.jpg",
-                "https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/2.jpg",
-                "https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/3.jpg",
-                "https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/4.jpg"
-            ],
+            // 人物图片路径：必须和HTML文件在同一目录，文件名严格一致
+            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"], 
             medalNames: ["陈依菲", "何胜新", "孔傲雪", "蒋佳妍"],
-            // 音乐CDN链接
-            musicPath: "https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/music.mp3",
+            musicPath: "music.mp3", // 替换为你的CDN音乐链接
             typeSpeed: 100,
+            // 占位图：加载失败时显示
             lazyLoadPlaceholder: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
         };
 
@@ -201,7 +197,7 @@
                             musicTip.classList.remove("show");
                             document.body.removeEventListener("click", retryPlay);
                         }).catch(err2 => {
-                            musicTip.textContent = "音乐加载失败，刷新页面重试";
+                            musicTip.textContent = "音乐加载失败，请检查CDN链接";
                             document.body.removeEventListener("click", retryPlay);
                         });
                     }, { once: true });
@@ -234,52 +230,68 @@
                 }
             }
 
+            /** 修复人物图片加载逻辑（核心修改） */
             function createMedal(medalIndex) {
                 const medalWrap = document.createElement("div");
                 medalWrap.className = "medalWrap";
 
+                // 人物图片元素
                 const medalElem = document.createElement("img");
-                medalElem.src = config.lazyLoadPlaceholder;
-                medalElem.dataset.src = config.medalImages[medalIndex];
+                medalElem.src = config.lazyLoadPlaceholder; // 先加载占位图
+                medalElem.dataset.src = config.medalImages[medalIndex]; // 真实图片路径
                 medalElem.className = "medal flash";
                 medalElem.alt = config.medalNames[medalIndex];
-                medalElem.crossOrigin = "anonymous"; // 解决CDN跨域
 
+                // 新增：图片加载错误提示（显示具体文件名，方便排查）
                 const errorElem = document.createElement("div");
                 errorElem.className = "image-error";
-                errorElem.textContent = `图片加载失败，刷新重试`;
+                errorElem.textContent = `图片加载失败：${config.medalImages[medalIndex]}`;
 
-                medalElem.onload = () => errorElem.classList.remove("show");
-                medalElem.onerror = () => {
-                    medalElem.src = config.lazyLoadPlaceholder;
-                    errorElem.classList.add("show");
+                // 图片加载成功：隐藏错误提示
+                medalElem.onload = function() {
+                    errorElem.classList.remove("show");
                 };
 
+                // 图片加载失败：显示错误提示，并保留金色兜底背景
+                medalElem.onerror = function() {
+                    this.src = config.lazyLoadPlaceholder; // 显示占位图
+                    errorElem.classList.add("show"); // 显示错误信息
+                };
+
+                // 修复懒加载逻辑：兼容所有浏览器，强制触发加载
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
+                            // 强制设置src，避免observer延迟
                             medalElem.src = medalElem.dataset.src;
                             observer.unobserve(medalElem);
                         }
                     });
-                }, { rootMargin: "200px 0px", threshold: 0.1 });
+                }, { 
+                    rootMargin: "200px 0px", // 提前200px加载
+                    threshold: 0.1 // 可见10%即触发
+                });
                 observer.observe(medalElem);
 
+                // 强制触发一次检查（解决部分浏览器observer不生效问题）
                 setTimeout(() => {
                     if (medalElem.src === config.lazyLoadPlaceholder) {
                         medalElem.src = medalElem.dataset.src;
                     }
                 }, 500);
 
+                // 姓名标签
                 const nameElem = document.createElement("div");
                 nameElem.className = "name";
                 nameElem.textContent = config.medalNames[medalIndex];
 
+                // 组装元素
                 medalWrap.appendChild(medalElem);
                 medalWrap.appendChild(nameElem);
-                medalWrap.appendChild(errorElem);
+                medalWrap.appendChild(errorElem); // 加入错误提示
                 medalContainer.appendChild(medalWrap);
 
+                // 显示动画
                 setTimeout(() => medalElem.classList.add("show"), 100);
             }
         };
