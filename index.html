@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 缓存优化：二次次打开秒加载 -->
     <meta http-equiv="Cache-Control" content="max-age=86400, public">
-    <!-- 预加载背景图，不预加载音乐（微信会拦截） -->
+    <!-- 预加载背景图（优先渲染首屏） -->
     <link rel="preload" href="bg-desktop.jpg" as="image" media="(min-width: 769px)">
     <link rel="preload" href="bg-mobile.jpg" as="image" media="(max-width: 768px)">
     <title>优秀小组荣誉榜</title>
     <style>
-        /* 保留你喜欢的金色调风格+设备自适应 */
+        /* 基础样式：金色调+设备自适应 */
         html { height: 100% !important; margin: 0; padding: 0; }
         body {
             margin: 0;
@@ -20,7 +21,7 @@
             align-items: center;
             flex-direction: column;
             font-family: "微软雅黑", sans-serif;
-            background-color: #F5D76E;
+            background-color: #F5D76E; /* 金色兜底，避免背景图加载前空白 */
             background-image: url("bg-desktop.jpg");
             background-size: cover;
             background-repeat: no-repeat;
@@ -32,6 +33,8 @@
                 height: 100%;
             }
         }
+
+        /* 标题样式 */
         .title {
             font-size: 42px;
             color: #fff;
@@ -42,11 +45,11 @@
         }
         @media (max-width: 768px) { .title { font-size: 28px; } }
 
-        /* 核心：播放按钮（确保用户能清晰点击，触发交互） */
+        /* 核心按钮（确保用户点击触发音乐播放） */
         .start-btn {
             background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             color: #fff;
-            border: 3px solid #fff; /* 白色边框，微信里更醒目 */
+            border: 3px solid #fff;
             padding: 18px 45px;
             font-size: 26px;
             font-weight: bold;
@@ -63,7 +66,7 @@
         .start-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px #FFD700; }
         .start-btn.hide { display: none; }
 
-        /* 音乐错误提示（引导用户重试） */
+        /* 音乐提示（加载/播放失败时引导用户） */
         .music-tip {
             font-size: 16px;
             color: #fff;
@@ -75,7 +78,7 @@
         }
         .music-tip.show { display: block; }
 
-        /* 其他样式不变 */
+        /* 解说词样式 */
         .comment {
             font-size: 26px;
             color: #fff;
@@ -90,6 +93,7 @@
         }
         @media (max-width: 768px) { .comment { font-size: 18px; width: 95%; } }
 
+        /* 勋章容器（电脑一排，手机两排） */
         #medalContainer {
             display: flex;
             justify-content: center;
@@ -107,6 +111,7 @@
             }
         }
 
+        /* 勋章样式 */
         .medal {
             width: 250px;
             height: 250px;
@@ -153,13 +158,13 @@
     <div class="content-container">
         <h1 class="title">优秀小组荣誉榜</h1>
         <button class="start-btn" id="startBtn">点击公布名单</button>
-        <!-- 音乐提示：播放失败时显示 -->
         <div class="music-tip" id="musicTip">若未听到音乐，请再点击页面任意位置</div>
         <div class="comment" id="comment"></div>
         <div id="medalContainer"></div>
     </div>
 
     <script>
+        // 配置项（重点：音乐路径替换为国内CDN链接）
         const config = {
             commentParts: [
                 "本周课堂表现和作业表现比较好的小组是陈依菲小组，",
@@ -169,9 +174,11 @@
                 "孔傲雪、",
                 "蒋佳妍"
             ],
-            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"],
+            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"], // 勋章图（可替换为CDN链接）
             medalNames: ["陈依菲", "何胜新", "孔傲雪", "蒋佳妍"],
-            musicPath: "music.mp3", // 必须是MP3格式，路径和文件名不能错
+            // 【关键修改】替换为你的国内CDN音乐链接（腾讯云/七牛云/又拍云）
+            // 示例："https://你的CDN域名/music.mp3"
+            musicPath: "music.mp3", 
             typeSpeed: 100,
             lazyLoadPlaceholder: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
         };
@@ -182,46 +189,46 @@
             const medalContainer = document.getElementById("medalContainer");
             const musicTip = document.getElementById("musicTip");
             let isStarted = false;
-            let musicElem = null; // 关键：不在加载时创建，点击时再创建
+            let musicElem = null;
 
-            // 核心逻辑：用户点击按钮后，才创建音乐对象并播放（微信强制要求）
+            // 点击按钮触发：创建音乐对象+播放+启动流程
             startBtn.addEventListener("click", function() {
                 if (isStarted) return;
                 isStarted = true;
                 startBtn.classList.add("hide");
 
-                // 1. 点击后才创建Audio对象（避免微信提前拦截）
+                // 1. 点击后创建音乐对象（避免微信提前拦截）
                 musicElem = new Audio(config.musicPath);
-                // 2. 尝试播放（第一次点击触发）
+                // 2. 强制设置跨域（解决CDN加载问题）
+                musicElem.crossOrigin = "anonymous";
+                // 3. 尝试播放
                 playMusic();
 
-                // 3. 启动颁奖流程（不依赖音乐，避免音乐失败卡住）
+                // 4. 启动颁奖流程（不依赖音乐加载结果）
                 startTypewriter(0);
             });
 
-            /** 音乐播放核心函数：多重容错 */
+            /** 音乐播放核心逻辑（兼容微信+CDN） */
             function playMusic() {
                 musicElem.play().then(() => {
-                    // 播放成功：隐藏提示
-                    musicTip.classList.remove("show");
+                    musicTip.classList.remove("show"); // 播放成功
                 }).catch(err => {
-                    // 播放失败：显示提示，引导用户二次点击
+                    // 播放失败：引导用户二次点击（微信必须用户主动交互）
                     musicTip.classList.add("show");
-                    // 监听页面任意点击，二次触发播放（微信常见兼容）
                     document.body.addEventListener("click", function retryPlay() {
                         musicElem.play().then(() => {
                             musicTip.classList.remove("show");
-                            document.body.removeEventListener("click", retryPlay); // 移除监听
+                            document.body.removeEventListener("click", retryPlay);
                         }).catch(err2 => {
-                            // 二次失败：提示文件问题
-                            musicTip.textContent = "音乐加载失败，请检查music.mp3文件";
+                            // 二次失败：提示CDN链接问题
+                            musicTip.textContent = "音乐加载失败，请检查CDN链接";
                             document.body.removeEventListener("click", retryPlay);
                         });
-                    }, { once: true }); // 只监听一次点击
+                    }, { once: true });
                 });
             }
 
-            // 以下是打字机和勋章逻辑（不变，确保功能正常）
+            /** 打字机效果（不变） */
             function startTypewriter(partIndex) {
                 const currentText = config.commentParts[partIndex];
                 let charIndex = 0;
@@ -237,6 +244,7 @@
                 }, config.typeSpeed);
             }
 
+            /** 打字后显示勋章（不变） */
             function handleAfterType(partIndex) {
                 switch (partIndex) {
                     case 0: setTimeout(() => startTypewriter(1), 1000); break;
@@ -248,6 +256,7 @@
                 }
             }
 
+            /** 勋章懒加载（不变） */
             function createMedal(medalIndex) {
                 const medalWrap = document.createElement("div");
                 medalWrap.className = "medalWrap";
@@ -262,6 +271,7 @@
                     medalElem.alt = `图片加载失败：${config.medalNames[medalIndex]}`;
                 };
 
+                // 进入可视区域加载真实图片
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
