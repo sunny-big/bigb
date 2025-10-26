@@ -2,10 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>优秀小组荣誉榜</title>
     <style>
-        /* 基础样式不变，强化加载提示显示 */
+        /* 基础样式不变，加载提示仅保留简洁文本 */
         .loading-tip {
             font-size: 24px;
             color: #fff;
@@ -17,7 +17,8 @@
         @media (max-width: 768px) {
             .loading-tip { font-size: 18px; }
         }
-        /* 其他样式保持不变（标题、按钮、勋章等） */
+
+        /* 其他样式保持不变 */
         html, body {
             width: 100%;
             height: 100%;
@@ -167,8 +168,8 @@
     </style>
 </head>
 <body>
-    <!-- 加载提示：显示实时进度，方便排查问题 -->
-    <div class="loading-tip" id="loadingTip">正在加载资源（0/6）...</div>
+    <!-- 仅显示“加载荣誉榜”，无资源进度 -->
+    <div class="loading-tip" id="loadingTip">加载荣誉榜，请稍候...</div>
     
     <div class="content-container">
         <h1 class="title" id="mainTitle">优秀小组荣誉榜</h1>
@@ -180,15 +181,10 @@
 
     <script>
         const config = {
-            // 明确需要加载的图片（共6张：2张背景+4张勋章）
-            allImages: [
-                "bg-desktop.jpg", 
-                "bg-mobile.jpg", 
-                "1.jpg", 
-                "2.jpg", 
-                "3.jpg", 
-                "4.jpg"
-            ],
+            // 分批次定义资源：1.背景图 2.人物图 3.音乐（按优先级排序）
+            backgroundImgs: ["bg-desktop.jpg", "bg-mobile.jpg"], // 第一优先级：背景
+            personImgs: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"],    // 第二优先级：人物
+            musicPath: "music.mp3",                              // 第三优先级：音乐
             commentParts: [
                 "本周课堂表现和作业表现比较好的小组是陈依菲小组，",
                 "小组成员如下：",
@@ -197,80 +193,92 @@
                 "孔傲雪、",
                 "蒋佳妍"
             ],
-            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"],
-            medalNames: ["陈依菲", "何胜新", "孔傲雪", "蒋佳妍"],
-            musicPath: "music.mp3",
             typeSpeed: 100,
-            loadTimeout: 10000 // 超时时间：10秒（10000毫秒）
+            loadTimeout: 8000 // 超时时间：8秒（仅针对图片，音乐不影响）
         };
 
-        let loadedCount = 0;
-        const totalImages = config.allImages.length; // 总数量：6
-        let timeoutTimer = null; // 超时计时器
+        let bgLoadedCount = 0;    // 背景图加载计数
+        let personLoadedCount = 0;// 人物图加载计数
+        let timeoutTimer = null;  // 超时计时器
+        let preloadedPersonImgs = []; // 预加载好的人物图（供后续使用）
 
-        // 预加载所有图片
-        function preloadAllImages() {
-            // 设置超时机制：10秒后无论是否加载完，强制显示按钮
+        // 核心：按优先级加载资源（背景→人物→音乐）
+        function loadResourcesByPriority() {
+            // 1. 先加载背景图（首屏优先）
+            loadBackgroundImgs();
+
+            // 2. 设置超时：8秒后即使图片没加载完，也显示按钮（避免卡住）
             timeoutTimer = setTimeout(() => {
-                console.log("加载超时，强制显示按钮");
-                forceShowButton();
+                console.log("图片加载超时，强制显示荣誉榜");
+                showButtonAndLoadMusic(); // 显示按钮+最后加载音乐
             }, config.loadTimeout);
+        }
 
-            // 遍历加载所有图片
-            config.allImages.forEach((imgUrl, index) => {
+        // 第一步：加载背景图
+        function loadBackgroundImgs() {
+            config.backgroundImgs.forEach(imgUrl => {
                 const img = new Image();
-                // 加载成功：更新计数和进度
-                img.onload = function() {
-                    console.log(`加载成功：${imgUrl}`);
-                    updateLoadProgress();
+                img.onload = img.onerror = function() {
+                    bgLoadedCount++;
+                    // 所有背景图加载完，立即开始加载人物图
+                    if (bgLoadedCount >= config.backgroundImgs.length) {
+                        loadPersonImgs();
+                    }
                 };
-                // 加载失败：仍更新计数（避免卡住），并提示错误
-                img.onerror = function() {
-                    console.error(`加载失败：${imgUrl}（请检查文件是否存在）`);
-                    updateLoadProgress();
-                };
-                // 开始加载
                 img.src = imgUrl;
             });
         }
 
-        // 更新加载进度
-        function updateLoadProgress() {
-            loadedCount++;
-            // 实时显示进度（例如：加载中 2/6...）
-            document.getElementById("loadingTip").textContent = `正在加载资源（${loadedCount}/${totalImages}）...`;
-            // 所有图片加载完成：显示按钮
-            if (loadedCount >= totalImages) {
+        // 第二步：加载人物图（背景加载完才开始）
+        function loadPersonImgs() {
+            config.personImgs.forEach((imgUrl, index) => {
+                const img = new Image();
+                img.onload = function() {
+                    preloadedPersonImgs[index] = imgUrl; // 缓存加载好的路径
+                    personLoadedCount++;
+                    checkAllImgsLoaded(); // 检查是否所有图片都加载完
+                };
+                img.onerror = function() {
+                    preloadedPersonImgs[index] = imgUrl; // 即使失败也记录路径（后续显示错误）
+                    personLoadedCount++;
+                    checkAllImgsLoaded();
+                };
+                img.src = imgUrl;
+            });
+        }
+
+        // 检查所有图片（背景+人物）是否加载完
+        function checkAllImgsLoaded() {
+            if (personLoadedCount >= config.personImgs.length) {
                 clearTimeout(timeoutTimer); // 清除超时计时器
-                showButton();
+                showButtonAndLoadMusic(); // 图片全加载完：显示按钮+加载音乐
             }
         }
 
-        // 正常显示按钮
-        function showButton() {
+        // 显示按钮+最后加载音乐（音乐优先级最低，不阻塞按钮）
+        function showButtonAndLoadMusic() {
+            // 显示标题和按钮
             document.getElementById("loadingTip").style.display = "none";
             document.getElementById("mainTitle").style.display = "block";
             document.getElementById("startBtn").style.display = "block";
-        }
 
-        // 超时强制显示按钮
-        function forceShowButton() {
-            document.getElementById("loadingTip").textContent = "部分资源加载较慢，已为您显示荣誉榜";
-            setTimeout(() => {
-                showButton();
-            }, 1000);
+            // 最后加载音乐（不影响按钮显示，加载失败也没关系）
+            const musicElem = new Audio(config.musicPath);
+            musicElem.crossOrigin = "anonymous";
+            musicElem.load(); // 预加载音乐（点击按钮时直接播放）
+            window.preloadedMusic = musicElem; // 存入全局，供点击时使用
         }
 
         window.onload = function() {
-            preloadAllImages();
+            // 页面加载后，按优先级开始加载资源
+            loadResourcesByPriority();
 
-            // 按钮点击逻辑（不变）
+            // 按钮点击逻辑
             const startBtn = document.getElementById("startBtn");
             const commentElem = document.getElementById("comment");
             const medalContainer = document.getElementById("medalContainer");
             const musicTip = document.getElementById("musicTip");
             let isStarted = false;
-            let musicElem = null;
 
             startBtn.addEventListener("click", function() {
                 if (isStarted) return;
@@ -278,29 +286,30 @@
                 startBtn.classList.add("hide");
                 startBtn.style.display = "none";
 
-                musicElem = new Audio(config.musicPath);
-                musicElem.crossOrigin = "anonymous";
-                playMusic();
+                // 播放预加载好的音乐
+                const musicElem = window.preloadedMusic;
+                if (musicElem) {
+                    musicElem.play().then(() => {
+                        musicTip.classList.remove("show");
+                    }).catch(err => {
+                        musicTip.classList.add("show");
+                        document.body.addEventListener("click", function retryPlay() {
+                            musicElem.play().then(() => {
+                                musicTip.classList.remove("show");
+                                document.body.removeEventListener("click", retryPlay);
+                            }).catch(err2 => {
+                                musicTip.textContent = "音乐加载失败，可正常查看荣誉榜";
+                                document.body.removeEventListener("click", retryPlay);
+                            });
+                        }, { once: true });
+                    });
+                }
+
+                // 启动打字机
                 startTypewriter(0);
             });
 
-            function playMusic() {
-                musicElem.play().then(() => {
-                    musicTip.classList.remove("show");
-                }).catch(err => {
-                    musicTip.classList.add("show");
-                    document.body.addEventListener("click", function retryPlay() {
-                        musicElem.play().then(() => {
-                            musicTip.classList.remove("show");
-                            document.body.removeEventListener("click", retryPlay);
-                        }).catch(err2 => {
-                            musicTip.textContent = "音乐加载失败，请检查文件";
-                            document.body.removeEventListener("click", retryPlay);
-                        });
-                    }, { once: true });
-                });
-            }
-
+            // 打字机逻辑（不变）
             function startTypewriter(partIndex) {
                 const currentText = config.commentParts[partIndex];
                 let charIndex = 0;
@@ -327,25 +336,26 @@
                 }
             }
 
+            // 勋章创建（使用预加载好的图片路径）
             function createMedal(medalIndex) {
                 const medalWrap = document.createElement("div");
                 medalWrap.className = "medalWrap";
 
                 const medalElem = document.createElement("img");
-                medalElem.src = config.medalImages[medalIndex];
+                medalElem.src = preloadedPersonImgs[medalIndex]; // 用预加载的路径
                 medalElem.className = "medal flash";
-                medalElem.alt = config.medalNames[medalIndex];
+                medalElem.alt = config.commentParts[2 + medalIndex].split("：")[1].replace("，", "").replace("、", "");
 
                 const errorElem = document.createElement("div");
                 errorElem.className = "image-error";
-                errorElem.textContent = `图片加载失败：${config.medalImages[medalIndex]}`;
+                errorElem.textContent = `图片加载失败：${preloadedPersonImgs[medalIndex]}`;
 
                 medalElem.onload = () => errorElem.classList.remove("show");
                 medalElem.onerror = () => errorElem.classList.add("show");
 
                 const nameElem = document.createElement("div");
                 nameElem.className = "name";
-                nameElem.textContent = config.medalNames[medalIndex];
+                nameElem.textContent = medalElem.alt;
 
                 medalWrap.appendChild(medalElem);
                 medalWrap.appendChild(nameElem);
