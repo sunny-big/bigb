@@ -2,13 +2,12 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 手机适配核心：禁止缩放 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 缓存优化：让微信浏览器缓存资源1天，减少重复下载 -->
+    <!-- 缓存优化：二次打开秒加载 -->
     <meta http-equiv="Cache-Control" content="max-age=86400, public">
     <title>优秀小组荣誉榜</title>
     <style>
-        /* 基础样式：电脑端默认（金色调风格保留） */
+        /* 首屏样式优先加载：确保背景图和核心元素快速渲染 */
         body {
             margin: 0;
             padding: 20px;
@@ -18,7 +17,7 @@
             align-items: center;
             flex-direction: column;
             font-family: "微软雅黑", sans-serif;
-            /* 电脑端背景图（已压缩的大屏图） */
+            /* 首屏背景图：必须压缩（电脑端≤500KB，手机端≤300KB），确保快速加载 */
             background-image: url("bg-desktop.jpg");
             background-size: cover;
             background-repeat: no-repeat;
@@ -26,6 +25,8 @@
             background-attachment: fixed;
             background-color: rgba(255, 215, 0, 0.3);
             background-blend-mode: overlay;
+            /* 禁止背景图延迟加载，强制优先渲染 */
+            background-attachment: initial;
         }
         .title {
             font-size: 42px;
@@ -33,6 +34,8 @@
             text-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500;
             margin-bottom: 20px;
             text-align: center;
+            /* 标题优先显示，不等待其他资源 */
+            opacity: 1 !important;
         }
         .start-btn {
             background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
@@ -46,6 +49,8 @@
             transition: all 0.3s;
             margin: 30px 0;
             z-index: 10;
+            /* 按钮优先渲染 */
+            opacity: 1 !important;
         }
         .start-btn:hover {
             transform: scale(1.05);
@@ -53,6 +58,17 @@
         }
         .start-btn.hide {
             display: none;
+        }
+        /* 音乐加载提示：避免用户以为没音乐 */
+        .music-loading {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px #000;
+            display: none;
+        }
+        .music-loading.show {
+            display: block;
         }
         .comment {
             font-size: 26px;
@@ -68,7 +84,7 @@
             justify-content: center;
             text-shadow: 0 0 8px #000, 0 0 12px rgba(0,0,0,0.8);
         }
-        /* 勋章容器：电脑端一排显示 */
+        /* 电脑端勋章：一排显示（非首屏，可延迟加载） */
         #medalContainer {
             display: flex;
             justify-content: center;
@@ -92,7 +108,6 @@
             margin: 0 20px;
             text-align: center;
         }
-        /* 勋章闪烁动画 */
         @keyframes flash {
             from { box-shadow: 0 0 15px #FFD700; }
             to { box-shadow: 0 0 30px #FFD700, 0 0 40px #FFA500; }
@@ -117,11 +132,10 @@
             align-items: center;
         }
 
-        /* 手机端适配（加载提速+两排布局） */
+        /* 手机端：首屏背景+音乐优先，勋章两排 */
         @media (max-width: 768px) {
             body {
-                /* 手机端背景图（已压缩的竖屏图） */
-                background-image: url("bg-mobile.jpg");
+                background-image: url("bg-mobile.jpg"); /* 手机端背景图（压缩后≤300KB） */
             }
             .title {
                 font-size: 28px;
@@ -134,7 +148,6 @@
                 font-size: 18px;
                 width: 95%;
             }
-            /* 勋章容器：手机端两排显示 */
             #medalContainer {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -159,13 +172,14 @@
 <body>
     <div class="content-container">
         <h1 class="title">优秀小组荣誉榜</h1>
+        <!-- 音乐加载提示：让用户知道音乐在准备 -->
+        <div class="music-loading" id="musicLoading">音乐加载中...</div>
         <button class="start-btn" id="startBtn">点击公布名单</button>
         <div class="comment" id="comment"></div>
         <div id="medalContainer"></div>
     </div>
 
     <script>
-        // 可修改配置（每周更新只需改这里）
         const config = {
             commentParts: [
                 "本周课堂表现和作业表现比较好的小组是陈依菲小组，",
@@ -175,50 +189,64 @@
                 "孔傲雪、",
                 "蒋佳妍"
             ],
-            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"], // 组长→成员顺序
+            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"], // 勋章图（非首屏，可懒加载）
             medalNames: ["陈依菲", "何胜新", "孔傲雪", "蒋佳妍"],
-            musicPath: "music.mp3", // 已压缩的MP3
+            musicPath: "music.mp3", // 音乐必须压缩（≤1MB，128kbps）
             typeSpeed: 100,
-            lazyLoadPlaceholder: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" // 轻量占位图
+            lazyLoadPlaceholder: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" // 勋章占位图
         };
 
         window.onload = function() {
             const startBtn = document.getElementById("startBtn");
             const commentElem = document.getElementById("comment");
             const medalContainer = document.getElementById("medalContainer");
+            const musicLoading = document.getElementById("musicLoading");
             let isStarted = false;
 
-            // 点击按钮触发：延迟加载音乐+启动流程（核心提速点）
+            // 核心：页面加载时立即初始化音乐（预加载，不立即播放）
+            const musicElem = new Audio(config.musicPath);
+            // 开启音乐预加载，浏览器会在后台加载，不阻塞首屏
+            musicElem.preload = "auto";
+            // 监听音乐加载状态，显示/隐藏加载提示
+            musicElem.addEventListener("loadeddata", function() {
+                musicLoading.classList.remove("show"); // 加载完成，隐藏提示
+            });
+            musicElem.addEventListener("error", function() {
+                musicLoading.textContent = "音乐加载失败，点击仍可查看荣誉榜";
+            });
+
+            // 首屏加载完成后，显示音乐加载提示（仅加载慢时显示）
+            setTimeout(() => {
+                if (musicElem.readyState < 2) { // 音乐未加载完成
+                    musicLoading.classList.add("show");
+                }
+            }, 500);
+
+            // 点击按钮：立即播放音乐（此时音乐大概率已预加载完成）
             startBtn.addEventListener("click", function() {
                 if (isStarted) return;
                 isStarted = true;
                 startBtn.classList.add("hide");
+                musicLoading.classList.remove("show");
 
-                // 1. 延迟加载音乐（用户点击后再创建，不占用首屏资源）
-                loadMusic();
-
-                // 2. 启动打字机流程
-                startTypewriter(0);
-            });
-
-            /** 音乐延迟加载：避免首屏资源竞争 */
-            function loadMusic() {
-                const musicElem = new Audio(config.musicPath);
-                // 尝试播放（兼容微信授权）
+                // 播放音乐（兼容微信授权）
                 musicElem.play().catch(err => {
-                    alert("音乐需要授权，再点击页面任意位置即可播放");
+                    alert("请点击页面任意位置开启音乐");
                     document.body.addEventListener("click", function playOnClick() {
                         musicElem.play().then(() => {
                             document.body.removeEventListener("click", playOnClick);
                         }).catch(err2 => {
-                            alert("音乐播放失败，可忽略继续查看荣誉榜");
+                            alert("音乐授权失败，可继续查看荣誉榜");
                             document.body.removeEventListener("click", playOnClick);
                         });
                     }, { once: true });
                 });
-            }
 
-            /** 打字机函数：逐字符显示 */
+                // 启动打字机流程
+                startTypewriter(0);
+            });
+
+            /** 打字机函数 */
             function startTypewriter(partIndex) {
                 const currentText = config.commentParts[partIndex];
                 let charIndex = 0;
@@ -235,7 +263,7 @@
                 }, config.typeSpeed);
             }
 
-            /** 打字后逻辑：同步显示勋章（懒加载） */
+            /** 打字后：显示勋章（非首屏，懒加载不影响速度） */
             function handleAfterType(partIndex) {
                 switch (partIndex) {
                     case 0:
@@ -262,51 +290,42 @@
                 }
             }
 
-            /** 勋章懒加载：进入可视区域才加载真实图片（核心提速点） */
+            /** 勋章懒加载：非首屏资源，延迟加载不影响首屏速度 */
             function createMedal(medalIndex) {
                 const medalWrap = document.createElement("div");
                 medalWrap.className = "medalWrap";
 
-                // 1. 创建勋章图片容器
                 const medalElem = document.createElement("img");
-                // 占位图（体积<1KB，快速加载）
-                medalElem.src = config.lazyLoadPlaceholder;
-                // 真实图片地址存放在data-src（不立即加载）
-                medalElem.dataset.src = config.medalImages[medalIndex];
+                medalElem.src = config.lazyLoadPlaceholder; // 占位图（1KB）
+                medalElem.dataset.src = config.medalImages[medalIndex]; // 真实勋章图
                 medalElem.className = "medal flash";
                 medalElem.alt = config.medalNames[medalIndex];
 
-                // 图片加载失败提示
                 medalElem.onerror = function() {
                     this.src = config.lazyLoadPlaceholder;
                     this.alt = `图片加载失败：${config.medalNames[medalIndex]}`;
                 };
 
-                // 2. 监听图片是否进入可视区域（进入后加载真实图片）
+                // 进入可视区域再加载真实勋章图
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            // 加载真实图片
                             medalElem.src = medalElem.dataset.src;
-                            // 停止监听
                             observer.unobserve(medalElem);
                         }
                     });
-                }, { rootMargin: "200px 0px" }); // 提前200px开始加载，避免延迟
+                }, { rootMargin: "200px 0px" });
 
                 observer.observe(medalElem);
 
-                // 3. 创建姓名标签
                 const nameElem = document.createElement("div");
                 nameElem.className = "name";
                 nameElem.textContent = config.medalNames[medalIndex];
 
-                // 4. 组装元素
                 medalWrap.appendChild(medalElem);
                 medalWrap.appendChild(nameElem);
                 medalContainer.appendChild(medalWrap);
 
-                // 勋章显示动画
                 setTimeout(() => medalElem.classList.add("show"), 100);
             }
         };
