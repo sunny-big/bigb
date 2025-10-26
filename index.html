@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 缓存优化：二次次打开秒加载 -->
     <meta http-equiv="Cache-Control" content="max-age=86400, public">
-    <!-- 预加载背景图（优先渲染首屏） -->
-    <link rel="preload" href="bg-desktop.jpg" as="image" media="(min-width: 769px)">
-    <link rel="preload" href="bg-mobile.jpg" as="image" media="(max-width: 768px)">
+    <!-- 预加载核心资源，加速首屏 -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/bg-desktop.jpg" as="image" media="(min-width: 769px)">
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/bg-mobile.jpg" as="image" media="(max-width: 768px)">
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/1.jpg" as="image">
     <title>优秀小组荣誉榜</title>
     <style>
-        /* 基础样式：金色调+设备自适应 */
         html { height: 100% !important; margin: 0; padding: 0; }
         body {
             margin: 0;
@@ -21,31 +20,20 @@
             align-items: center;
             flex-direction: column;
             font-family: "微软雅黑", sans-serif;
-            background-color: #F5D76E; /* 金色兜底，避免背景图加载前空白 */
-            background-image: url("bg-desktop.jpg");
+            background-color: #F5D76E;
+            background-image: url("https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/bg-desktop.jpg");
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
         }
         @media (max-width: 768px) {
             body {
-                background-image: url("bg-mobile.jpg");
+                background-image: url("https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/bg-mobile.jpg");
                 height: 100%;
             }
         }
-
-        /* 标题样式 */
-        .title {
-            font-size: 42px;
-            color: #fff;
-            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500;
-            margin-bottom: 20px;
-            text-align: center;
-            z-index: 5;
-        }
+        .title { font-size: 42px; color: #fff; text-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500; margin-bottom: 20px; text-align: center; z-index: 5; }
         @media (max-width: 768px) { .title { font-size: 28px; } }
-
-        /* 核心按钮（确保用户点击触发音乐播放） */
         .start-btn {
             background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             color: #fff;
@@ -58,15 +46,11 @@
             box-shadow: 0 0 20px #FFD700;
             transition: all 0.3s;
             margin: 30px 0;
-            z-index: 100; /* 最高层级，不被遮挡 */
+            z-index: 100;
         }
-        @media (max-width: 768px) {
-            .start-btn { font-size: 20px; padding: 15px 40px; }
-        }
+        @media (max-width: 768px) { .start-btn { font-size: 20px; padding: 15px 40px; } }
         .start-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px #FFD700; }
         .start-btn.hide { display: none; }
-
-        /* 音乐提示（加载/播放失败时引导用户） */
         .music-tip {
             font-size: 16px;
             color: #fff;
@@ -77,8 +61,6 @@
             z-index: 5;
         }
         .music-tip.show { display: block; }
-
-        /* 解说词样式 */
         .comment {
             font-size: 26px;
             color: #fff;
@@ -92,8 +74,6 @@
             z-index: 5;
         }
         @media (max-width: 768px) { .comment { font-size: 18px; width: 95%; } }
-
-        /* 勋章容器（电脑一排，手机两排） */
         #medalContainer {
             display: flex;
             justify-content: center;
@@ -110,8 +90,6 @@
                 padding: 0 10px;
             }
         }
-
-        /* 勋章样式 */
         .medal {
             width: 250px;
             height: 250px;
@@ -123,20 +101,20 @@
             transform: scale(0.8);
             transition: all 0.5s;
             box-shadow: 0 0 15px #FFD700;
+            background-color: #FFD700;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
         }
-        @media (max-width: 768px) {
-            .medal { width: 150px; height: 150px; border-width: 6px; margin: 10px 0; }
-        }
+        @media (max-width: 768px) { .medal { width: 150px; height: 150px; border-width: 6px; margin: 10px 0; } }
         .medal.flash { animation: flash 1s infinite alternate; }
         .medal.show { opacity: 1; transform: scale(1); }
         @keyframes flash {
             from { box-shadow: 0 0 15px #FFD700; }
             to { box-shadow: 0 0 30px #FFD700, 0 0 40px #FFA500; }
         }
-
         .medalWrap { margin: 0 20px; text-align: center; }
         @media (max-width: 768px) { .medalWrap { margin: 0; } }
-
         .name {
             font-size: 22px;
             color: #fff;
@@ -144,7 +122,6 @@
             text-shadow: 0 0 5px #000;
         }
         @media (max-width: 768px) { .name { font-size: 16px; } }
-
         .content-container {
             width: 100%;
             display: flex;
@@ -152,19 +129,26 @@
             align-items: center;
             z-index: 5;
         }
+        .image-error {
+            font-size: 14px;
+            color: #fff;
+            text-shadow: 0 0 5px #000;
+            margin-top: 5px;
+            display: none;
+        }
+        .image-error.show { display: block; }
     </style>
 </head>
 <body>
     <div class="content-container">
         <h1 class="title">优秀小组荣誉榜</h1>
-        <button class="start-btn" id="startBtn">点击公布名单</button>
+        <button class="start-btn" id="startBtn">点击公布名单（播放音乐）</button>
         <div class="music-tip" id="musicTip">若未听到音乐，请再点击页面任意位置</div>
         <div class="comment" id="comment"></div>
         <div id="medalContainer"></div>
     </div>
 
     <script>
-        // 配置项（重点：音乐路径替换为国内CDN链接）
         const config = {
             commentParts: [
                 "本周课堂表现和作业表现比较好的小组是陈依菲小组，",
@@ -174,11 +158,16 @@
                 "孔傲雪、",
                 "蒋佳妍"
             ],
-            medalImages: ["1.jpg", "2.jpg", "3.jpg", "4.jpg"], // 勋章图（可替换为CDN链接）
+            // 已替换为jsDelivr CDN链接，直接用
+            medalImages: [
+                "https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/1.jpg",
+                "https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/2.jpg",
+                "https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/3.jpg",
+                "https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/4.jpg"
+            ],
             medalNames: ["陈依菲", "何胜新", "孔傲雪", "蒋佳妍"],
-            // 【关键修改】替换为你的国内CDN音乐链接（腾讯云/七牛云/又拍云）
-            // 示例："https://你的CDN域名/music.mp3"
-            musicPath: "music.mp3", 
+            // 音乐CDN链接
+            musicPath: "https://cdn.jsdelivr.net/gh/sunny-big/bigb@main/music.mp3",
             typeSpeed: 100,
             lazyLoadPlaceholder: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
         };
@@ -191,44 +180,34 @@
             let isStarted = false;
             let musicElem = null;
 
-            // 点击按钮触发：创建音乐对象+播放+启动流程
             startBtn.addEventListener("click", function() {
                 if (isStarted) return;
                 isStarted = true;
                 startBtn.classList.add("hide");
 
-                // 1. 点击后创建音乐对象（避免微信提前拦截）
                 musicElem = new Audio(config.musicPath);
-                // 2. 强制设置跨域（解决CDN加载问题）
                 musicElem.crossOrigin = "anonymous";
-                // 3. 尝试播放
                 playMusic();
-
-                // 4. 启动颁奖流程（不依赖音乐加载结果）
                 startTypewriter(0);
             });
 
-            /** 音乐播放核心逻辑（兼容微信+CDN） */
             function playMusic() {
                 musicElem.play().then(() => {
-                    musicTip.classList.remove("show"); // 播放成功
+                    musicTip.classList.remove("show");
                 }).catch(err => {
-                    // 播放失败：引导用户二次点击（微信必须用户主动交互）
                     musicTip.classList.add("show");
                     document.body.addEventListener("click", function retryPlay() {
                         musicElem.play().then(() => {
                             musicTip.classList.remove("show");
                             document.body.removeEventListener("click", retryPlay);
                         }).catch(err2 => {
-                            // 二次失败：提示CDN链接问题
-                            musicTip.textContent = "音乐加载失败，请检查CDN链接";
+                            musicTip.textContent = "音乐加载失败，刷新页面重试";
                             document.body.removeEventListener("click", retryPlay);
                         });
                     }, { once: true });
                 });
             }
 
-            /** 打字机效果（不变） */
             function startTypewriter(partIndex) {
                 const currentText = config.commentParts[partIndex];
                 let charIndex = 0;
@@ -244,7 +223,6 @@
                 }, config.typeSpeed);
             }
 
-            /** 打字后显示勋章（不变） */
             function handleAfterType(partIndex) {
                 switch (partIndex) {
                     case 0: setTimeout(() => startTypewriter(1), 1000); break;
@@ -256,7 +234,6 @@
                 }
             }
 
-            /** 勋章懒加载（不变） */
             function createMedal(medalIndex) {
                 const medalWrap = document.createElement("div");
                 medalWrap.className = "medalWrap";
@@ -266,12 +243,18 @@
                 medalElem.dataset.src = config.medalImages[medalIndex];
                 medalElem.className = "medal flash";
                 medalElem.alt = config.medalNames[medalIndex];
+                medalElem.crossOrigin = "anonymous"; // 解决CDN跨域
+
+                const errorElem = document.createElement("div");
+                errorElem.className = "image-error";
+                errorElem.textContent = `图片加载失败，刷新重试`;
+
+                medalElem.onload = () => errorElem.classList.remove("show");
                 medalElem.onerror = () => {
                     medalElem.src = config.lazyLoadPlaceholder;
-                    medalElem.alt = `图片加载失败：${config.medalNames[medalIndex]}`;
+                    errorElem.classList.add("show");
                 };
 
-                // 进入可视区域加载真实图片
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
@@ -279,8 +262,14 @@
                             observer.unobserve(medalElem);
                         }
                     });
-                }, { rootMargin: "200px 0px" });
+                }, { rootMargin: "200px 0px", threshold: 0.1 });
                 observer.observe(medalElem);
+
+                setTimeout(() => {
+                    if (medalElem.src === config.lazyLoadPlaceholder) {
+                        medalElem.src = medalElem.dataset.src;
+                    }
+                }, 500);
 
                 const nameElem = document.createElement("div");
                 nameElem.className = "name";
@@ -288,6 +277,7 @@
 
                 medalWrap.appendChild(medalElem);
                 medalWrap.appendChild(nameElem);
+                medalWrap.appendChild(errorElem);
                 medalContainer.appendChild(medalWrap);
 
                 setTimeout(() => medalElem.classList.add("show"), 100);
